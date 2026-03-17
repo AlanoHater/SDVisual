@@ -99,7 +99,7 @@ export default function DataFlow() {
           [0, 0.4, 1.6],
           [1.4, 1.1, 0]
         ]}
-        color="#a78bfa"
+        color="#22d3ee"
         count={120}
         speedMin={0.35}
         speedMax={0.72}

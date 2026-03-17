@@ -83,6 +83,17 @@ export default function UNetSphere({ position, color, onClick }: NodeProps) {
         onClick?.()
       }}
     >
+      <mesh>
+        <sphereGeometry args={[1.15, 48, 48]} />
+        <meshStandardMaterial
+          color="#16a34a"
+          emissive="#22c55e"
+          emissiveIntensity={0.65}
+          roughness={0.15}
+          metalness={0.2}
+        />
+      </mesh>
+
       {/* Cambia shape a "box" o "sphere" para alternar */}
       <CustomGeometryParticles count={2000} shape="sphere" color={color} />
 

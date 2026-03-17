@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -13,6 +14,54 @@ export default function OutputImage({ position, visible, onClick }: OutputImageP
   const meshRef = useRef<THREE.Group>(null)
   const materialRef = useRef<THREE.MeshStandardMaterial>(null)
   const frameRef = useRef<THREE.MeshStandardMaterial>(null)
+
+  const imageTexture = useMemo(() => {
+    if (typeof document === 'undefined') return null
+
+    const canvas = document.createElement('canvas')
+    canvas.width = 512
+    canvas.height = 512
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+
+    const sky = ctx.createLinearGradient(0, 0, 0, 320)
+    sky.addColorStop(0, '#60a5fa')
+    sky.addColorStop(1, '#dbeafe')
+    ctx.fillStyle = sky
+    ctx.fillRect(0, 0, 512, 512)
+
+    ctx.fillStyle = '#334155'
+    ctx.beginPath()
+    ctx.moveTo(0, 320)
+    ctx.lineTo(90, 220)
+    ctx.lineTo(170, 300)
+    ctx.lineTo(260, 180)
+    ctx.lineTo(380, 310)
+    ctx.lineTo(512, 230)
+    ctx.lineTo(512, 512)
+    ctx.lineTo(0, 512)
+    ctx.closePath()
+    ctx.fill()
+
+    const lake = ctx.createLinearGradient(0, 320, 0, 512)
+    lake.addColorStop(0, '#0f172a')
+    lake.addColorStop(1, '#1d4ed8')
+    ctx.fillStyle = lake
+    ctx.fillRect(0, 350, 512, 162)
+
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'
+    ctx.fillRect(100, 90, 150, 5)
+    ctx.fillRect(280, 120, 110, 4)
+
+    ctx.fillStyle = '#e2e8f0'
+    ctx.font = 'bold 26px sans-serif'
+    ctx.fillText('Stable Diffusion Render', 95, 470)
+
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.needsUpdate = true
+    return texture
+  }, [])
 
   useFrame((state, delta) => {
     if (meshRef.current) {
@@ -38,7 +87,14 @@ export default function OutputImage({ position, visible, onClick }: OutputImageP
     >
       <mesh>
         <planeGeometry args={[2.5, 2.5]} />
-        <meshStandardMaterial ref={materialRef} color="#ffffff" transparent opacity={0} side={THREE.DoubleSide} />
+        <meshStandardMaterial
+          ref={materialRef}
+          color="#ffffff"
+          map={imageTexture ?? undefined}
+          transparent
+          opacity={0}
+          side={THREE.DoubleSide}
+        />
       </mesh>
       
       <mesh position={[0, 0, -0.05]}>
