@@ -206,12 +206,15 @@ export default function Scene() {
   const [tourFinished, setTourFinished] = useState(false)
   const [coverVisible, setCoverVisible] = useState(true)
   const [coverClosing, setCoverClosing] = useState(false)
+  const [viewportWidth, setViewportWidth] = useState(1280)
   const [focusedNode, setFocusedNode] = useState<NodeKey | null>(null)
   const [pulseTick, setPulseTick] = useState(0)
   const titleRef = useRef<HTMLHeadingElement | null>(null)
   const controlsRef = useRef<OrbitControlsHandle | null>(null)
   const coverStartTimeoutRef = useRef<number | null>(null)
   const modalInfo = selectedNode ? NODE_INFO[selectedNode] : null
+  const isMobile = viewportWidth < 768
+  const isTablet = viewportWidth >= 768 && viewportWidth < 1024
 
   const activeFlowSegment = useMemo<FlowSegment | null>(() => {
     if (!tourStarted || tourFinished || !focusedNode) return null
@@ -233,6 +236,13 @@ export default function Scene() {
         window.clearTimeout(coverStartTimeoutRef.current)
       }
     }
+  }, [])
+
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth)
+    onResize()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
   }, [])
 
   // Pulse the modal title when selectedNode changes
@@ -270,8 +280,12 @@ export default function Scene() {
   }
 
   return (
-    <div className="relative w-full h-screen bg-gray-950">
-      <Canvas camera={{ position: [0, 4, 14], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
+    <div className="relative w-full h-screen bg-gray-950" style={{ position: 'relative', width: '100%', height: '100dvh', background: '#030712', overflow: 'hidden' }}>
+      <Canvas
+        camera={{ position: isMobile ? [0, 4.8, 15.5] : isTablet ? [0, 4.3, 14.7] : [0, 4, 14], fov: isMobile ? 54 : isTablet ? 49 : 45 }}
+        dpr={isMobile ? [1, 1.25] : [1, 1.5]}
+        gl={{ antialias: true, powerPreference: 'high-performance' }}
+      >
         <color attach="background" args={['#030712']} />
         <ambientLight intensity={0.5} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
@@ -359,23 +373,53 @@ export default function Scene() {
           enabled={tourStarted && tourFinished}
           enablePan={false}
           maxPolarAngle={Math.PI / 2 - 0.05}
-          minDistance={7}
-          maxDistance={28}
+          minDistance={isMobile ? 6 : 7}
+          maxDistance={isMobile ? 24 : 28}
         />
-        <Stars radius={50} depth={50} count={1000} factor={4} saturation={0} fade />
+        <Stars radius={50} depth={50} count={isMobile ? 650 : 1000} factor={4} saturation={0} fade />
       </Canvas>
 
       {coverVisible && (
         <div
           className={`absolute inset-0 z-40 flex items-center justify-center bg-slate-950/55 p-6 backdrop-blur-2xl transition-all duration-700 ease-out ${coverClosing ? 'opacity-0 backdrop-blur-0' : 'opacity-100'}`}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: isMobile ? '16px' : '24px',
+            background: 'rgba(2, 6, 23, 0.55)',
+            backdropFilter: coverClosing ? 'blur(0px)' : 'blur(22px)',
+            WebkitBackdropFilter: coverClosing ? 'blur(0px)' : 'blur(22px)',
+            transition: 'opacity 700ms ease-out, backdrop-filter 700ms ease-out',
+            opacity: coverClosing ? 0 : 1
+          }}
         >
           <button
             type="button"
             onClick={handleStartTour}
             className="w-full max-w-2xl rounded-2xl border border-slate-300/35 bg-slate-900/70 px-8 py-10 text-center text-slate-100 shadow-[0_0_40px_rgba(15,23,42,0.6)] transition hover:border-white/50"
+            style={{
+              width: '100%',
+              maxWidth: isMobile ? '460px' : '740px',
+              borderRadius: '18px',
+              border: '1px solid rgba(226,232,240,0.32)',
+              background: 'rgba(15, 23, 42, 0.72)',
+              color: '#f8fafc',
+              padding: isMobile ? '24px 18px' : '36px 34px',
+              textAlign: 'center',
+              boxShadow: '0 0 40px rgba(15,23,42,0.6)',
+              cursor: 'pointer'
+            }}
           >
-            <h2 className="text-4xl font-black tracking-[0.1em] text-white sm:text-5xl">Stable Diffusion</h2>
-            <p className="mt-4 text-sm font-medium uppercase tracking-[0.24em] text-slate-300 sm:text-base">Haz clic para iniciar el recorrido</p>
+            <h2 className="text-4xl font-black tracking-[0.1em] text-white sm:text-5xl" style={{ margin: 0, fontSize: isMobile ? '32px' : '52px', letterSpacing: isMobile ? '0.08em' : '0.1em' }}>
+              Stable Diffusion
+            </h2>
+            <p className="mt-4 text-sm font-medium uppercase tracking-[0.24em] text-slate-300 sm:text-base" style={{ marginTop: '14px', marginBottom: 0, fontSize: isMobile ? '12px' : '15px', letterSpacing: isMobile ? '0.16em' : '0.24em' }}>
+              Haz clic para iniciar el recorrido
+            </p>
           </button>
         </div>
       )}
@@ -384,10 +428,12 @@ export default function Scene() {
         <div
           className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={() => setSelectedNode(null)}
+          style={{ position: 'absolute', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,6,23,0.65)', backdropFilter: 'blur(6px)', padding: isMobile ? '14px' : '16px' }}
         >
           <div
             className="w-full max-w-2xl rounded-2xl border border-slate-600 bg-slate-900/95 p-6 text-slate-100 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: isMobile ? '95vw' : '768px', borderRadius: '16px', border: '1px solid rgba(100,116,139,0.6)', background: 'rgba(15,23,42,0.95)', color: '#f1f5f9', padding: isMobile ? '16px' : '24px' }}
           >
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>

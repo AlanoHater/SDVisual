@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+:root{
+	--bg:#030712;
+	--muted:#94a3b8;
+}
+
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+body > * {
+	min-height: 100%;
+}
+
+body{
+	font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+	background: var(--bg);
+	color: #e6eef8;
+}
+
+/* Epic floating headline */
+.epic-text{
+	font-family: 'Cinzel', serif;
+	font-weight:700;
+	font-size: clamp(22px, 3vw, 48px);
+	line-height:1.05;
+	color: #fff;
+	text-align:center;
+	text-transform:uppercase;
+	letter-spacing: 0.12em;
+	background: linear-gradient(90deg,#ffd166,#ff6b6b,#845ef7);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	text-shadow: 0 0 18px rgba(132,94,247,0.45), 0 0 36px rgba(255,107,107,0.18);
+}
+
+/* Slightly larger subtitle */
+.epic-sub{
+	font-family: 'Poppins', sans-serif;
+	font-weight:600;
+	font-size: clamp(12px, 1.4vw, 18px);
+	color: rgba(226,238,248,0.9);
+	margin-top:6px;
+	opacity:0.95;
+}
+
+/* Ensure modal top layer */
+.sd-modal{z-index:9999}
