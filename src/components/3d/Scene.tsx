@@ -104,54 +104,47 @@ function CameraDirector({
 const NODE_INFO: Record<NodeKey, { title: string; subtitle: string; details: string[] }> = {
   prompt: {
     title: 'Input Prompt',
-    subtitle: 'Tokenizacion y condicionamiento textual',
+    subtitle: 'Describe lo que quieres ver',
     details: [
-      'Se aplica tokenizacion BPE/WordPiece para convertir texto a ids discretos y truncar/pad a longitud fija.',
-      'Cada token i se proyecta a embedding e_i y se combina con posicion: h_i = e_i + p_i.',
-      'Se generan embeddings condicionales c_pos y no condicionales c_uncond para classifier-free guidance.',
-      'CFG mezcla predicciones con: eps_hat = eps(x_t, t, c_uncond) + s * (eps(x_t, t, c_pos) - eps(x_t, t, c_uncond)).',
-      'El valor s (guidance scale) controla fidelidad al texto frente a diversidad visual.'
+      'Aquí escribes la descripción de la imagen que quieres generar: objetos, estilo, colores y ambiente.',
+      'Piensa en palabras clave simples: p. ej. "montañas al atardecer, niebla suave, colores cálidos".',
+      'El sistema usa estas palabras para guiar la generación; cuanto más claro seas, más cerca estará el resultado.'
     ]
   },
   encoder: {
     title: 'Text Encoder (CLIP)',
-    subtitle: 'Representacion semantica en espacio latente textual',
+    subtitle: 'Convierte tus palabras en ideas que entiende el modelo',
     details: [
-      'El transformer textual produce una secuencia contextualizada H in R^(L x d).',
-      'La autoatencion usa: Attention(Q,K,V) = softmax(QK^T / sqrt(d_k))V.',
-      'U-Net consume H en bloques cross-attention para alinear estructura visual con semantica del prompt.',
-      'Embeddings estables mejoran composicion global, relaciones objeto-fondo y coherencia de estilo.'
+      'Toma el texto que escribiste y lo transforma en una representación interna (una "idea") que entiende el generador.',
+      'No es la imagen: es una forma compacta de describir los elementos visuales y su relación.',
+      'Esto ayuda al modelo a saber qué priorizar a la hora de crear formas, colores y composición.'
     ]
   },
   unet: {
-    title: 'U-Net + Scheduler',
-    subtitle: 'Inferencia difusiva en espacio latente',
+    title: 'U-Net & Scheduler',
+    subtitle: 'El motor que transforma ruido en imagen',
     details: [
-      'Forward process: q(x_t | x_0) = N(sqrt(alpha_bar_t) x_0, (1 - alpha_bar_t) I).',
-      'Reverse model: eps_theta(x_t, t, c) estima ruido para reconstruir x_0 de manera iterativa.',
-      'Actualizacion DDPM aproximada: x_(t-1) = 1/sqrt(alpha_t) * (x_t - (1-alpha_t)/sqrt(1-alpha_bar_t) * eps_hat) + sigma_t z.',
-      'Schedulers modernos (DDIM, Euler, DPM++) reducen pasos manteniendo detalle y estabilidad numerica.',
-      'Cross-attention inyecta condicion textual en resoluciones multiples del U-Net para control semantico fino.'
+      'Empieza con una imagen de ruido y, paso a paso, la va convirtiendo en algo reconocible siguiendo el prompt.',
+      'En cada paso el modelo mejora la imagen: añade detalles, corrige formas y refina color y textura.',
+      'El "scheduler" es la receta que decide cuántos pasos y cómo aplicar esas correcciones para obtener un resultado estable.'
     ]
   },
   vae: {
     title: 'VAE Decoder',
-    subtitle: 'Decodificacion del latente denoised a RGB',
+    subtitle: 'Convierte la representación interna a una imagen visible',
     details: [
-      'Stable Diffusion opera en latente z para abaratar coste; VAE decoder mapea z -> x en pixeles.',
-      'Reconstruccion entrenada con perdida perceptual + terminos KL para regularizar distribucion latente.',
-      'La salida mantiene semantica del prompt mientras recupera color, bordes y textura espacial.',
-      'Escalado tipico del latente (por ejemplo 1/0.18215 en SD1.x) se revierte antes de decodificar.'
+      'Toma la representación interna final del modelo y la traduce a píxeles para formar la imagen que ves.',
+      'Ajusta colores, bordes y texturas para que la imagen sea coherente y visualmente agradable.',
+      'Piensa en esto como el último paso que transforma la idea en una fotografía digital.'
     ]
   },
   output: {
     title: 'Output Image',
-    subtitle: 'Resultado sintetizado listo para postproceso',
+    subtitle: 'La imagen final lista para ver o mejorar',
     details: [
-      'La imagen final integra composicion global + microdetalle aprendido durante el denoising.',
-      'Posteriores etapas opcionales: upscaling, face restoration, control por inpainting/outpainting.',
-      'Metricas frecuentes de evaluacion: CLIP score, alineacion semantica, nitidez y artefactos estructurales.',
-      'Semilla, scheduler y guidance configuran reproducibilidad y estilo final del render.'
+      'Este es el resultado: la imagen generada a partir de tu descripción.',
+      'Puedes guardarla, retocarla o usarla como base para ampliarla (upscale) o restaurar detalles.',
+      'Si no te convence, ajusta el prompt y vuelve a generar para obtener un resultado distinto.'
     ]
   }
 }
@@ -181,7 +174,7 @@ export default function Scene() {
             anchorX="center"
             anchorY="middle"
           >
-            {'Stable Diffusion: pipeline latente condicionado por texto\nque transforma ruido gaussiano en imagen coherente'}
+            {'Stable Diffusion'}
           </Text>
         </Float>
         
