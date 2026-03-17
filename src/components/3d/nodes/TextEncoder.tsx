@@ -3,7 +3,12 @@ import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 
-export default function TextEncoder({ position }: { position: [number, number, number] }) {
+interface TextEncoderProps {
+  position: [number, number, number]
+  onClick?: () => void
+}
+
+export default function TextEncoder({ position, onClick }: TextEncoderProps) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame((_, delta) => {
@@ -15,7 +20,13 @@ export default function TextEncoder({ position }: { position: [number, number, n
   })
 
   return (
-    <group position={position}>
+    <group
+      position={position}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick?.()
+      }}
+    >
       <group ref={groupRef}>
         {/* Núcleo sólido */}
         <mesh>
@@ -28,10 +39,9 @@ export default function TextEncoder({ position }: { position: [number, number, n
           <meshStandardMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={2} wireframe toneMapped={false} />
         </mesh>
       </group>
-      <Html position={[0, -2.5, 0]} center>
-        <div className="w-56 p-4 rounded-lg bg-gray-900/80 border border-blue-500 backdrop-blur-sm text-white text-sm">
-          <h3 className="font-bold text-blue-400 mb-2">TEXT ENCODER (CLIP)</h3>
-          <p className="text-gray-300 text-xs">Convierte prompt en Latent Embeddings.</p>
+      <Html position={[0, 2.2, 0]} center pointerEvents="none">
+        <div className="rounded-md border border-blue-500/70 bg-slate-900/80 px-3 py-1 text-xs font-semibold tracking-wide text-blue-300">
+          TEXT ENCODER
         </div>
       </Html>
     </group>

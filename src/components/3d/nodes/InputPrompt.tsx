@@ -6,7 +6,7 @@ import * as THREE from 'three'
 const PROMPT_WORDS = [
   "montañas", "valle", "río", "laguna", "bosque",
   "pradera", "niebla", "amanecer", "atardecer", "nubes",
-  "sendero", "picos", "reflejo", "bruma", "cascada"
+  "sendero", "picos", "reflejo", "bruma", "cascada","realista","colorido"
 ]
 
 function Word({ position, text }: { position: THREE.Vector3, text: string }) {
@@ -76,7 +76,12 @@ function Cloud({ count = 3, radius = 1.2 }) {
   )
 }
 
-export default function InputPrompt({ position }: { position: [number, number, number] }) {
+interface InputPromptProps {
+  position: [number, number, number]
+  onClick?: () => void
+}
+
+export default function InputPrompt({ position, onClick }: InputPromptProps) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame((_, delta) => {
@@ -87,15 +92,20 @@ export default function InputPrompt({ position }: { position: [number, number, n
   })
 
   return (
-    <group position={position}>
+    <group
+      position={position}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick?.()
+      }}
+    >
       <group ref={groupRef} scale={[0.85, 0.85, 0.85]}>
         <Cloud count={3} radius={1.2} />
       </group>
 
-      <Html position={[0, -2.2, 0]} center>
-        <div className="w-44 p-3 rounded-lg bg-gray-900/80 border border-gray-500 backdrop-blur-sm text-white text-xs">
-          <h3 className="font-bold text-gray-300 mb-1">INPUT PROMPT</h3>
-          <p className="text-gray-400 text-[10px]">Nube de palabras: paisaje, clima y elementos naturales.</p>
+      <Html position={[0, 2.2, 0]} center pointerEvents="none">
+        <div className="rounded-md border border-slate-500/70 bg-slate-900/80 px-3 py-1 text-xs font-semibold tracking-wide text-slate-200">
+          INPUT PROMPT
         </div>
       </Html>
     </group>
