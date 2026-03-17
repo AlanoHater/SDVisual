@@ -23,7 +23,7 @@ export default function Scene() {
         <TextEncoder position={[-6, 1, 0]} />
         <UNetSphere position={[0, 1, 0]} color="#22c55e" />
         <VAEDecoder position={[6, 1, 0]} />
-        <OutputImage position={[11, 1, 0]} />
+        <OutputImage position={[11, 1, 0]} visible={true} />
         
         {/* Entorno: Suelo reflectivo y Grilla */}
         <group position={[0, -2.5, 0]}>
