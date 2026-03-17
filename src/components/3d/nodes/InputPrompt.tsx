@@ -79,15 +79,30 @@ function Cloud({ count = 3, radius = 1.2 }) {
 interface InputPromptProps {
   position: [number, number, number]
   onClick?: () => void
+  showLabel?: boolean
+  isActive?: boolean
+  pulseTick?: number
 }
 
-export default function InputPrompt({ position, onClick }: InputPromptProps) {
+export default function InputPrompt({ position, onClick, showLabel = true, isActive = false, pulseTick = 0 }: InputPromptProps) {
   const groupRef = useRef<THREE.Group>(null)
+  const [labelPulse, setLabelPulse] = useState(false)
+
+  useEffect(() => {
+    if (!isActive) {
+      setLabelPulse(false)
+      return
+    }
+
+    setLabelPulse(true)
+    const id = window.setTimeout(() => setLabelPulse(false), 260)
+    return () => window.clearTimeout(id)
+  }, [isActive, pulseTick])
 
   useFrame((_, delta) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.1
-      groupRef.current.rotation.x += delta * 0.05
+      groupRef.current.rotation.y += delta * 0.04
+      groupRef.current.rotation.x += delta * 0.02
     }
   })
 
@@ -103,11 +118,21 @@ export default function InputPrompt({ position, onClick }: InputPromptProps) {
         <Cloud count={3} radius={1.2} />
       </group>
 
-      <Html position={[0, 2.2, 0]} center pointerEvents="none">
-        <div className="rounded-md border border-slate-500/70 bg-slate-900/80 px-3 py-1 text-xs font-semibold tracking-wide text-slate-200">
-          INPUT PROMPT
-        </div>
-      </Html>
+      {showLabel && (
+        <Html position={[0, 2.2, 0]} center pointerEvents="none">
+          <div
+            className="rounded-md border border-slate-500/70 bg-slate-900/80 px-3 py-1 text-xs font-semibold tracking-wide text-slate-200"
+            style={{
+              transform: labelPulse ? 'scale(1.18)' : 'scale(1)',
+              transition: 'transform 180ms ease-out, box-shadow 180ms ease-out, text-shadow 180ms ease-out',
+              boxShadow: labelPulse ? '0 0 24px rgba(148,163,184,0.65)' : 'none',
+              textShadow: labelPulse ? '0 0 8px rgba(226,232,240,0.9)' : 'none'
+            }}
+          >
+            INPUT PROMPT
+          </div>
+        </Html>
+      )}
     </group>
   )
 }

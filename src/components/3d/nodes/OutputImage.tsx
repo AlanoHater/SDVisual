@@ -1,5 +1,4 @@
-import { useRef } from 'react'
-import { useMemo } from 'react'
+import { useRef, useMemo, useState, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -8,12 +7,28 @@ interface OutputImageProps {
   position: [number, number, number]
   visible: boolean
   onClick?: () => void
+  imageSrc?: string | null
+  showLabel?: boolean
+  isActive?: boolean
+  pulseTick?: number
 }
 
-export default function OutputImage({ position, visible, onClick }: OutputImageProps) {
+export default function OutputImage({ position, visible, onClick, imageSrc, showLabel = true, isActive = false, pulseTick = 0 }: OutputImageProps) {
   const meshRef = useRef<THREE.Group>(null)
   const materialRef = useRef<THREE.MeshStandardMaterial>(null)
   const frameRef = useRef<THREE.MeshStandardMaterial>(null)
+  const [labelPulse, setLabelPulse] = useState(false)
+
+  useEffect(() => {
+    if (!isActive) {
+      setLabelPulse(false)
+      return
+    }
+
+    setLabelPulse(true)
+    const id = window.setTimeout(() => setLabelPulse(false), 260)
+    return () => window.clearTimeout(id)
+  }, [isActive, pulseTick])
 
   const imageTexture = useMemo(() => {
     if (typeof document === 'undefined') return null
@@ -63,6 +78,34 @@ export default function OutputImage({ position, visible, onClick }: OutputImageP
     return texture
   }, [])
 
+  const [texture, setTexture] = useState<THREE.Texture | null>(imageTexture)
+
+  useEffect(() => {
+    let mounted = true
+    if (!imageSrc) {
+      setTexture(imageTexture ?? null)
+      return () => { mounted = false }
+    }
+
+    const loader = new THREE.TextureLoader()
+    loader.load(
+      imageSrc,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace
+        tex.needsUpdate = true
+        if (mounted) setTexture(tex)
+      },
+      undefined,
+      (err) => {
+        // fallback to canvas texture on error
+        console.error('Error loading OutputImage texture:', err)
+        if (mounted) setTexture(imageTexture ?? null)
+      }
+    )
+
+    return () => { mounted = false }
+  }, [imageSrc, imageTexture])
+
   useFrame((state, delta) => {
     if (meshRef.current) {
       meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime) * 0.1
@@ -90,7 +133,7 @@ export default function OutputImage({ position, visible, onClick }: OutputImageP
         <meshStandardMaterial
           ref={materialRef}
           color="#ffffff"
-          map={imageTexture ?? undefined}
+          map={texture ?? undefined}
           transparent
           opacity={0}
           side={THREE.DoubleSide}
@@ -102,11 +145,21 @@ export default function OutputImage({ position, visible, onClick }: OutputImageP
         <meshStandardMaterial ref={frameRef} color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} transparent opacity={0} toneMapped={false} />
       </mesh>
 
-      <Html position={[0, 2.2, 0]} center style={{ transition: 'opacity 1s', opacity: visible ? 1 : 0, pointerEvents: 'none' }}>
-        <div className="rounded-md border border-white/70 bg-slate-900/80 px-3 py-1 text-xs font-semibold tracking-wide text-white">
-          OUTPUT IMAGE
-        </div>
-      </Html>
+      {showLabel && (
+        <Html position={[0, 2.2, 0]} center style={{ transition: 'opacity 1s', opacity: visible ? 1 : 0, pointerEvents: 'none' }}>
+          <div
+            className="rounded-md border border-white/70 bg-slate-900/80 px-3 py-1 text-xs font-semibold tracking-wide text-white"
+            style={{
+              transform: labelPulse ? 'scale(1.18)' : 'scale(1)',
+              transition: 'transform 180ms ease-out, box-shadow 180ms ease-out, text-shadow 180ms ease-out',
+              boxShadow: labelPulse ? '0 0 24px rgba(255,255,255,0.65)' : 'none',
+              textShadow: labelPulse ? '0 0 8px rgba(255,255,255,0.95)' : 'none'
+            }}
+          >
+            OUTPUT IMAGE
+          </div>
+        </Html>
+      )}
     </group>
   )
 }

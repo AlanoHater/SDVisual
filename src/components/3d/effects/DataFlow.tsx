@@ -6,6 +6,7 @@ import * as THREE from 'three'
 interface FlowPathProps {
   points: [number, number, number][]
   color: string
+  active: boolean
   count?: number
   speedMin?: number
   speedMax?: number
@@ -14,9 +15,10 @@ interface FlowPathProps {
 function FlowPath({
   points,
   color,
+  active,
   count = 80,
-  speedMin = 0.22,
-  speedMax = 0.55
+  speedMin = 0.12,
+  speedMax = 0.3
 }: FlowPathProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null)
 
@@ -38,6 +40,10 @@ function FlowPath({
   useFrame((_, delta) => {
     if (!meshRef.current) return
 
+    if (!active) {
+      return
+    }
+
     particles.forEach((particle, i) => {
       particle.offset += delta * particle.speed
       if (particle.offset > 1) particle.offset = 0
@@ -54,16 +60,18 @@ function FlowPath({
 
   return (
     <group>
-      <Line points={sampledPoints} color={color} transparent opacity={0.23} lineWidth={1.2} />
+      <Line points={sampledPoints} color={color} transparent opacity={active ? 0.38 : 0.08} lineWidth={1.2} />
       <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
         <sphereGeometry args={[0.05, 10, 10]} />
-        <meshBasicMaterial color={color} toneMapped={false} />
+        <meshBasicMaterial color={color} toneMapped={false} transparent opacity={active ? 1 : 0.14} />
       </instancedMesh>
     </group>
   )
 }
 
-export default function DataFlow() {
+type ActiveSegment = 'prompt-encoder' | 'encoder-unet' | 'unet-vae' | 'vae-output' | null
+
+export default function DataFlow({ activeSegment }: { activeSegment: ActiveSegment }) {
   return (
     <group>
       {/* Prompt tokens -> Text Encoder */}
@@ -75,6 +83,7 @@ export default function DataFlow() {
         ]}
         color="#e2e8f0"
         count={56}
+        active={activeSegment === 'prompt-encoder'}
       />
 
       {/* Text embeddings -> U-Net conditioning */}
@@ -86,24 +95,9 @@ export default function DataFlow() {
         ]}
         color="#60a5fa"
         count={76}
+        active={activeSegment === 'encoder-unet'}
       />
 
-      {/* Noise schedule loop around U-Net (iterative denoising steps) */}
-      <FlowPath
-        points={[
-          [1.4, 1.1, 0],
-          [0.8, 2.8, 1.8],
-          [0, 3.2, 0],
-          [-0.8, 2.8, -1.8],
-          [-1.4, 1.1, 0],
-          [0, 0.4, 1.6],
-          [1.4, 1.1, 0]
-        ]}
-        color="#22d3ee"
-        count={120}
-        speedMin={0.35}
-        speedMax={0.72}
-      />
 
       {/* Denoised latent -> VAE decoder */}
       <FlowPath
@@ -114,6 +108,7 @@ export default function DataFlow() {
         ]}
         color="#22c55e"
         count={84}
+        active={activeSegment === 'unet-vae'}
       />
 
       {/* Decoded pixels -> output image */}
@@ -125,6 +120,7 @@ export default function DataFlow() {
         ]}
         color="#fb923c"
         count={64}
+        active={activeSegment === 'vae-output'}
       />
     </group>
   )
